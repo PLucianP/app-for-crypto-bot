@@ -1,5 +1,49 @@
+## Core Frontend Architecture Task - Version 2
 
-## Core Frontend Architecture Task
+### Critical Implementation Guidelines (MUST FOLLOW)
+
+#### 1. **Application Initialization Standards**
+- Always call `init()` method after class instantiation
+- Set `currentPage` to `null` initially to allow proper navigation setup
+- Initialize global variables (`window.apiClient`, `window.animationController`) before use
+- Add comprehensive debug logging during initialization phases
+
+#### 2. **Data Handling Best Practices**
+- **Empty State First**: Design all components to handle empty data gracefully
+- **No Mock Data Generation**: Use empty arrays `[]` and zero values `0` for failed API calls
+- **Clean Error Handling**: On API failures, return clean empty states instead of fallback mock data
+- **Example Pattern**:
+```javascript
+// ✅ CORRECT: Clean empty state
+} catch (error) {
+    console.error('API failed:', error);
+    this.data = { trades: [], summary: { total: 0, pnl: 0 } };
+    this.render();
+}
+
+// ❌ AVOID: Mock data fallback
+} catch (error) {
+    this.data = this.generateMockData(); // Never do this
+}
+```
+
+#### 3. **Navigation Implementation Standards**
+- Clear container content completely before adding new pages: `container.innerHTML = '';`
+- Implement proper page cleanup methods with `destroy()` functions
+- Add event listener validation to ensure navigation setup works
+- Test page transitions thoroughly to prevent overlap
+
+#### 4. **API Integration Guidelines**
+- Set reasonable polling intervals (5+ minutes) for development/testing
+- Implement progressive backoff for failed API calls
+- Show connection status clearly to users
+- Handle WebSocket disconnections gracefully
+
+#### 5. **Module Loading Standards**
+- Ensure all ES module imports/exports are correctly structured
+- Avoid duplicate global instance creation
+- Add proper error boundaries for module initialization
+- Test each module independently for syntax errors
 
 ### Description
 Build a modern, animated frontend application using vanilla JavaScript with GSAP for animations, following a modular architecture:
@@ -86,10 +130,19 @@ app-for-crypto-bot/
 \`\`\`
 
 **Expected Output**: 
-- Single-page application structure
+- Single-page application structure with proper initialization
 - GSAP and Chart.js loaded
 - Responsive navigation with status indicators
 - Container structure for dynamic content
+- Clean initialization sequence at bottom of index.html:
+```html
+<script type="module">
+    import App from './static/js/main.js';
+    const app = new App();
+    app.init(); // Critical: Always call init()
+    window.app = app;
+</script>
+```
 
 #### 2. Page 1: Dashboard Implementation
 
@@ -103,6 +156,12 @@ class Dashboard {
         this.performanceCards = [];
         this.assetCards = [];
         this.timeline = gsap.timeline();
+        // Initialize with clean empty state
+        this.data = {
+            summary: { total_pnl: 0, active_trades: 0, win_rate: 0 },
+            assets: [],
+            performanceData: []
+        };
     }
     
     render() {
@@ -850,6 +909,11 @@ class APIClient {
             return await response.json();
         } catch (error) {
             console.error('API Request failed:', error);
+            // Show user-friendly error without exposing internals
+            this.showNotification({
+                type: 'error',
+                message: 'Connection issue - showing cached data'
+            });
             throw error;
         }
     }

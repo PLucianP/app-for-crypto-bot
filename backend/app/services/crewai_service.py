@@ -1,58 +1,20 @@
 import asyncio
 import json
 import logging
-import os
-import sys
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
 from app.models.trading import TradingDecisionCreate, TradingDecision, RiskLevel
 from app.services.supabase_service import supabase_service
 
+# Direct imports from the installed package
+from crypto import run_crypto_analysis, Config, CryptoCrew
+
 logger = logging.getLogger(__name__)
 
 class CrewAIService:
     def __init__(self):
-        self._setup_crypto_crewai_path()
-        self._import_crypto_crewai()
-    
-    def _setup_crypto_crewai_path(self):
-        """Add crypto_crewai to Python path if not already there"""
-        current_dir = os.path.dirname(__file__)
-        crypto_crewai_path = os.path.abspath(os.path.join(current_dir, '../../../../crypto_crewai'))
-        
-        if crypto_crewai_path not in sys.path:
-            sys.path.insert(0, crypto_crewai_path)
-            logger.info(f"Added crypto_crewai to path: {crypto_crewai_path}")
-    
-    def _import_crypto_crewai(self):
-        """Import the crypto_crewai package"""
-        try:
-            # Import the package components
-            from crypto_crewai import run_crypto_analysis, Config, CryptoCrew
-            
-            self.run_crypto_analysis = run_crypto_analysis
-            self.Config = Config
-            self.CryptoCrew = CryptoCrew
-            
-            logger.info("Successfully imported crypto_crewai package")
-            
-        except ImportError as e:
-            logger.error(f"Failed to import crypto_crewai: {e}")
-            # Fallback to direct src import
-            try:
-                sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../crypto_crewai/src'))
-                from crypto import run_crypto_analysis, Config, CryptoCrew
-                
-                self.run_crypto_analysis = run_crypto_analysis
-                self.Config = Config
-                self.CryptoCrew = CryptoCrew
-                
-                logger.info("Successfully imported crypto_crewai from src")
-                
-            except ImportError as e2:
-                logger.error(f"Failed to import from src: {e2}")
-                raise RuntimeError(f"Cannot import crypto_crewai: {e}, {e2}")
+        logger.info("Initializing CrewAI service with direct package imports")
     
     async def run_analysis(self, trading_pair: str = "BTCUSDC") -> Optional[TradingDecisionCreate]:
         """
@@ -103,7 +65,7 @@ class CrewAIService:
             logger.info(f"Starting CrewAI analysis for {trading_pair}")
             
             # Call the run_crypto_analysis function directly
-            result = self.run_crypto_analysis(trading_pair)
+            result = run_crypto_analysis(trading_pair)
             
             logger.info(f"CrewAI analysis completed for {trading_pair}")
             return result
@@ -246,7 +208,7 @@ class CrewAIService:
                     model_name = config["model_name"]
                     
                     if model_type in ["main_model", "vision_model"]:
-                        self.Config.SELECTED_MODELS[model_type] = model_name
+                        Config.SELECTED_MODELS[model_type] = model_name
                         logger.info(f"Updated {model_type} to {model_name}")
             
         except Exception as e:

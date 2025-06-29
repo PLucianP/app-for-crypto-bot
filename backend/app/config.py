@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     supabase_anon_key: str
     supabase_service_role_key: str
     
+    # CrewAI API Keys
+    # openrouter_api_key: str
+    # serper_api_key: str
+    
     # API Settings
     api_prefix: str = "/api"
     api_version: str = "v1"
